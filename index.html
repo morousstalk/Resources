@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  </head>
+    
+  <body>
+  </title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #2a1b42 0%, #0d0714 100%);
+    font-family: sans-serif;
+    touch-action: none;
+  }
+
+  canvas {
+    display: block;
+  }
+
+  #ui {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  button {
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+    border: none;
+    border-radius: 30px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    pointer-events: auto;
+    transition: opacity 0.3s;
+  }
+
+  button:active {
+    transform: scale(0.95);
+  }
+
+  #instrucciones {
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 0 10px #000;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+</style>
+</head>
+
+<body>
+
+  <div id="instrucciones">Desliza la carta hacia un lado</div>
+
+  <div id="ui">
+    <button id="btnAbrir" style="display: block;">Abrir Sobre</button>
+    <button id="btnGuardar" style="display: none;">Guardar en Inventario</button>
+  </div>
+
+  <script type="importmap">
+    {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    // --- CATÁLOGO DE PRUEBA (Ampliado) ---
+    const catalogoCartas = [{
+        id: "TikOnThePrawl",
+        rareza: "C",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/TikOnThePrawl.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/TikOnThePrawlHolo.png'
+      },
+      {
+        id: "WatchfulTikTik",
+        rareza: "C",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/WatchfulTikTik.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/WatchfulTikTikHolo.png'
+      },
+      {
+        id: "TravelingPerforer",
+        rareza: "U",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/TravelingPerformer.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/TravelingPerformerHolo.png'
+      },
+      {
+        id: "SolRing",
+        rareza: "U",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/SolRing.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/SolRingHolo.png'
+      },
+      {
+        id: "LilithChampiom",
+        rareza: "R",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/LilithChampion.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/LilithChampionHolo.png'
+      },
+      {
+        id: "VoluntaryExodus",
+        rareza: "R",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/VoluntaryExodus.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/VoluntaryExodusHolo.png'
+      },
+      {
+        id: "Island",
+        rareza: "L",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/Island.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/IslandHolo.png'
+      },
+      {
+        id: "Swamp2",
+        rareza: "L",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/Swamp2.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/Swamp2Holo.png'
+      },
+      {
+        id: "Plains4",
+        rareza: "L",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/Plains4.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/Plains4Holo.png'
+      },
+      {
+        id: "Mountain3",
+        rareza: "L",
+        mate: 'https://raw.githubusercontent.com/morousstalk/Resources/main/Mountain3.png',
+        foil: 'https://raw.githubusercontent.com/morousstalk/Resources/main/Mountain3Holo.png'
+      }
+    ];
+    // 1. Escena y Cámara
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50);
+    camera.position.set(0, 0, 5);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.8;
+    document.body.appendChild(renderer.domElement);
+    // 2. Iluminación
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    keyLight.position.set(2, 3, 4);
+    scene.add(keyLight);
+    // 3. Materiales
+    const textureLoader = new THREE.TextureLoader();
+
+    function crearTexturaTrama() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffffff';
+      for (let i = -256; i < 256; i += 4) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + 256, 256);
+        ctx.stroke();
+      }
+      for (let i = 0; i < 512; i += 4) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i - 256, 256);
+        ctx.stroke();
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(6, 6);
+      return tex;
+    }
+    const texturaTrama = crearTexturaTrama();
+    const shaderFoil = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: true,
+      uniforms: {
+        uTextura: {
+          value: null
+        },
+        uTrama: {
+          value: texturaTrama
+        },
+        uTiempo: {
+          value: 0.0
+        }
+      },
+      vertexShader: `
+                varying vec2 vUv; varying vec3 vNormal; varying vec3 vViewPosition;
+                void main() {
+                    vUv = uv; vNormal = normalize(normalMatrix * normal);
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    vViewPosition = -mvPosition.xyz; gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+      fragmentShader: `
+                uniform sampler2D uTextura; uniform sampler2D uTrama; uniform float uTiempo;
+                varying vec2 vUv; varying vec3 vNormal; varying vec3 vViewPosition;
+                void main() {
+                    vec4 colorBase = texture2D(uTextura, vUv);
+                    float trama = texture2D(uTrama, vUv).r; 
+                    vec3 normal = normalize(vNormal); vec3 vista = normalize(vViewPosition);
+                    float angulo = dot(normal, vista);
+                    float banda = sin((vUv.x + vUv.y) * 2.5 - uTiempo * 1.5) * 0.5 + 0.5;
+                    banda = pow(banda, 2.0); 
+                    float reflejo = pow(max(0.0, angulo), 2.0);
+                    float destello = banda * reflejo * trama;
+                    float r = sin(angulo * 4.0 + uTiempo) * 0.5 + 0.5;
+                    float g = sin(angulo * 4.0 + 2.0 + uTiempo) * 0.5 + 0.5;
+                    float b = sin(angulo * 4.0 + 4.0 + uTiempo) * 0.5 + 0.5;
+                    vec3 colorArcoiris = vec3(r * r, g * g, b * b); 
+                    vec3 colorFinal = colorBase.rgb + (colorBase.rgb * colorArcoiris * destello * 2.5) + (colorArcoiris * destello * 0.2);
+                    gl_FragColor = vec4(colorFinal, colorBase.a);
+                }
+            `
+    });
+    const materialNormal = new THREE.MeshStandardMaterial({
+      map: null,
+      roughness: 0.9,
+      metalness: 0.0,
+      envMapIntensity: 0.1
+    });
+    // 4. Geometría
+    const ancho = 1.2;
+    const alto = 1.68;
+    const radio = 0.1;
+    const shape = new THREE.Shape();
+    shape.moveTo(-ancho / 2, -alto / 2 + radio);
+    shape.lineTo(-ancho / 2, alto / 2 - radio);
+    shape.quadraticCurveTo(-ancho / 2, alto / 2, -ancho / 2 + radio, alto / 2);
+    shape.lineTo(ancho / 2 - radio, alto / 2);
+    shape.quadraticCurveTo(ancho / 2, alto / 2, ancho / 2, alto / 2 - radio);
+    shape.lineTo(ancho / 2, -alto / 2 + radio);
+    shape.quadraticCurveTo(ancho / 2, -alto / 2, ancho / 2 - radio, -alto / 2);
+    shape.lineTo(-ancho / 2 + radio, -alto / 2);
+    shape.quadraticCurveTo(-ancho / 2, -alto / 2, -ancho / 2, -alto / 2 + radio);
+    const geo = new THREE.ShapeGeometry(shape);
+    geo.center();
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      uv.setXY(i, (geo.attributes.position.getX(i) + ancho / 2) / ancho, (geo.attributes.position.getY(i) + alto / 2) / alto);
+    }
+    // --- LÓGICA DEL GACHA ---
+    function obtenerCartaDeRareza(rarezaBuscada) {
+      const filtradas = catalogoCartas.filter(c => c.rareza === rarezaBuscada);
+      if (filtradas.length === 0) return {
+        ...catalogoCartas[0]
+      };
+      return {
+        ...filtradas[Math.floor(Math.random() * filtradas.length)]
+      };
+    }
+
+    function generarSobre() {
+      const cartas = [];
+      cartas.push({
+        ...obtenerCartaDeRareza("C"),
+        esFoil: false
+      });
+      cartas.push({
+        ...obtenerCartaDeRareza("C"),
+        esFoil: false
+      });
+      cartas.push({
+        ...obtenerCartaDeRareza("U"),
+        esFoil: false
+      });
+      cartas.push({
+        ...obtenerCartaDeRareza("R"),
+        esFoil: false
+      });
+      cartas.push({
+        ...obtenerCartaDeRareza("L"),
+        esFoil: false
+      });
+      const dadoFoil = Math.random() * 100;
+      let rFoil = "C";
+      if (dadoFoil > 60 && dadoFoil <= 85) rFoil = "U";
+      if (dadoFoil > 85 && dadoFoil <= 95) rFoil = "R";
+      if (dadoFoil > 95) rFoil = "L";
+      cartas.push({
+        ...obtenerCartaDeRareza(rFoil),
+        esFoil: true
+      });
+      return cartas;
+    }
+    // --- CREACIÓN DE CARTAS 3D ---
+    const cartas3D = [];
+    let estado = "INICIO";
+    let cartasReveladas = 0;
+    const cartasDeslizadas = [];
+
+    function crearInstanciaCarta(cartaData) {
+      const group = new THREE.Group();
+      const material = cartaData.esFoil ? shaderFoil.clone() : materialNormal.clone();
+      const textura = textureLoader.load(cartaData.esFoil ? cartaData.foil : cartaData.mate);
+      textura.colorSpace = THREE.SRGBColorSpace;
+      if (cartaData.esFoil) {
+        material.uniforms.uTextura.value = textura;
+      } else {
+        material.map = textura;
+      }
+      const frente = new THREE.Mesh(geo, material);
+      frente.position.z = 0.01;
+      const dorsoMat = new THREE.MeshStandardMaterial({
+        color: 0x222222,
+        side: THREE.DoubleSide
+      });
+      const dorso = new THREE.Mesh(geo, dorsoMat);
+      dorso.position.z = -0.01;
+      dorso.rotation.y = Math.PI;
+      group.add(frente);
+      group.add(dorso);
+      group.userData = {
+        esFoil: cartaData.esFoil,
+        material: material
+      };
+      return group;
+    }
+    // --- INTERACCIÓN ---
+    const btnAbrir = document.getElementById('btnAbrir');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const instrucciones = document.getElementById('instrucciones');
+    btnAbrir.addEventListener('click', () => {
+      btnAbrir.style.display = 'none';
+      const cartasGeneradas = generarSobre();
+      cartasGeneradas.forEach((cData, index) => {
+        const c3d = crearInstanciaCarta(cData);
+        c3d.position.set(0, 0, index * -0.02);
+        c3d.rotation.set(0, 0, 0);
+        cartas3D.push(c3d);
+        scene.add(c3d);
+      });
+      estado = "STACK";
+      instrucciones.style.opacity = "1";
+    });
+    // --- LÓGICA DE DESLIZAR (FÍSICA CORREGIDA) ---
+    let isDragging = false;
+    let startX = 0;
+    let lastX = 0;
+    let velocityX = 0;
+    window.addEventListener('pointerdown', (e) => {
+      if (estado !== "STACK" || cartas3D.length === 0) return;
+      isDragging = true;
+      startX = e.clientX;
+      lastX = e.clientX;
+      velocityX = 0;
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging || estado !== "STACK" || cartas3D.length === 0) return;
+      const cartaTop = cartas3D[0];
+      const deltaX = e.clientX - startX;
+      // LA CLAVE: Multiplicamos por 0.01 para convertir píxeles a unidades 3D
+      velocityX = (e.clientX - lastX) * 0.01;
+      lastX = e.clientX;
+      cartaTop.position.x = deltaX * 0.01;
+      cartaTop.rotation.y = (deltaX * 0.01) * 0.5;
+    });
+    window.addEventListener('pointerup', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (estado !== "STACK" || cartas3D.length === 0) return;
+      const cartaTop = cartas3D[0];
+      // Umbral corregido
+      if (Math.abs(cartaTop.position.x) > 0.5 || Math.abs(velocityX) > 0.1) {
+        const direccion = Math.sign(cartaTop.position.x) || 1;
+        cartaTop.userData.volando = true;
+        cartaTop.userData.velocidadX = velocityX * 2.0; // Le damos un poco de envión
+        cartaTop.userData.direccion = direccion;
+        cartaTop.userData.rotacionZ = velocityX * 0.2;
+        cartasDeslizadas.push(cartas3D.shift());
+        cartasReveladas++;
+        if (cartasReveladas === 6) {
+          instrucciones.style.opacity = "0";
+          setTimeout(armarGrilla, 800);
+        }
+      } else {
+        cartaTop.position.x = 0;
+        cartaTop.rotation.y = 0;
+      }
+    });
+    // --- ARMAR LA GRILLA ---
+    function armarGrilla() {
+      estado = "GRID";
+      const todas = [...cartasDeslizadas];
+      const posiciones = [{
+          x: -0.8,
+          y: 1,
+          z: 0
+        }, {
+          x: 0.8,
+          y: 1,
+          z: 0
+        },
+        {
+          x: -0.8,
+          y: 0,
+          z: 0
+        }, {
+          x: 0.8,
+          y: 0,
+          z: 0
+        },
+        {
+          x: -0.8,
+          y: -1,
+          z: 0
+        }, {
+          x: 0.8,
+          y: -1,
+          z: 0
+        }
+      ];
+      todas.forEach((carta, index) => {
+        carta.userData.volando = false;
+        carta.userData.isGrilla = true;
+        carta.userData.targetGrilla = posiciones[index];
+        carta.position.set(0, 0, 0);
+        carta.rotation.set(0, 0, 0);
+        carta.scale.set(1, 1, 1);
+      });
+      btnGuardar.style.display = 'block';
+    }
+    // --- GUARDAR EN INVENTARIO ---
+    btnGuardar.addEventListener('click', () => {
+      btnGuardar.style.display = 'none';
+      estado = "INVENTARIO";
+      instrucciones.textContent = "Guardando...";
+      instrucciones.style.opacity = "1";
+      cartasDeslizadas.forEach((carta, index) => {
+        setTimeout(() => {
+          carta.userData.isGrilla = false;
+          carta.userData.isInventario = true;
+        }, index * 150);
+      });
+      setTimeout(() => {
+        instrucciones.textContent = "¡Cartas en el inventario!";
+        setTimeout(() => {
+          instrucciones.style.opacity = "0";
+        }, 2000);
+      }, cartasDeslizadas.length * 150 + 500);
+    });
+    // --- BUCLE DE ANIMACIÓN ---
+    function animate() {
+      requestAnimationFrame(animate);
+      const tiempo = Date.now() * 0.001;
+      scene.traverse((child) => {
+        if (child.userData.esFoil && child.userData.material.uniforms) {
+          child.userData.material.uniforms.uTiempo.value = tiempo;
+        }
+      });
+      scene.children.forEach(carta => {
+        if (carta.type === "Group") {
+          if (carta.userData.volando) {
+            carta.position.x += carta.userData.velocidadX;
+            carta.userData.velocidadX += carta.userData.direccion * 0.02;
+            carta.rotation.z += carta.userData.rotacionZ;
+          }
+          if (carta.userData.isGrilla && carta.userData.targetGrilla) {
+            const t = carta.userData.targetGrilla;
+            carta.position.x += (t.x - carta.position.x) * 0.08;
+            carta.position.y += (t.y - carta.position.y) * 0.08;
+            carta.position.z += (t.z - carta.position.z) * 0.08;
+            carta.rotation.z += (0 - carta.rotation.z) * 0.08;
+            carta.rotation.y += (0 - carta.rotation.y) * 0.08;
+          }
+          if (carta.userData.isInventario) {
+            carta.position.y += (-5 - carta.position.y) * 0.1;
+            carta.position.z -= 0.05;
+            carta.rotation.x += 0.05;
+            carta.scale.x += (0.1 - carta.scale.x) * 0.1;
+            carta.scale.y += (0.1 - carta.scale.y) * 0.1;
+          }
+        }
+      });
+      renderer.render(scene, camera);
+    }
+    // Ajuste de pantalla
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    // ¡ARRANCAMOS EL BUCLE!
+    animate();
+  </script>
+    
+  </body>
+  
+</html>
