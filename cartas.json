@@ -51,6 +51,14 @@
   { "id": "KalaksTyrCity", "rareza": "R", "mate": "https://raw.githubusercontent.com/morousstalk/Resources/main/KalaksTyrCity.png", "foil": "https://raw.githubusercontent.com/morousstalk/Resources/main/KalaksTyrCityHolo.png" },
 
   { "id": "DemonicTutor", "rareza": "MR", "mate": "https://raw.githubusercontent.com/morousstalk/Resources/main/DemonicTutor.png", "foil": "https://raw.githubusercontent.com/morousstalk/Resources/main/DemonicTutorHolo.png" },
-  { "id": "MrRTheCollector", "rareza": "MR", "mate": "https://raw.githubusercontent.com/morousstalk/Resources/main/MrRTheCollector.png", "foil": "https://raw.githubusercontent.com/morousstalk/Resources/main/MrRTheCollectorHolo.png" },
+{ 
+  "id": "MrRTheCollector", 
+  "rareza": "MR", 
+  "mate": "https://raw.githubusercontent.com/morousstalk/Resources/main/MrRTheCollector.png", 
+  "foil": "https://raw.githubusercontent.com/morousstalk/Resources/main/MrRTheCollectorHolo.png",
+  "esDoble": true,
+  "mate2": "https://raw.githubusercontent.com/morousstalk/Resources/main/RaveeSilverhand.png",
+  "foil2": "https://raw.githubusercontent.com/morousstalk/Resources/main/RaveeSilverhandHolo.png"
+}
   { "id": "ZalamansEquilibrium", "rareza": "MR", "mate": "https://raw.githubusercontent.com/morousstalk/Resources/main/ZalamansEquilibrium.png", "foil": "https://raw.githubusercontent.com/morousstalk/Resources/main/ZalamansEquilibriumHolo.png" }
 ]
